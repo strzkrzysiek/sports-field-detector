@@ -1,0 +1,5 @@
+# build directories
+/build*
+
+# MacOS files
+.DS_Store
