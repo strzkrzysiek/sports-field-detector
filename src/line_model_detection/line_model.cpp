@@ -40,10 +40,10 @@ void LineModel::addLine(const std::string& name,
 
   drawLine(line);
 
-  LOG(INFO) << "Line definition (" << name << "): "
-            << line.pt0_in_model.transpose() << " "
-            << line.pt1_in_model.transpose() << " "
-            << line.line_in_model.transpose();
+  LOG(INFO) << "Line definition (" << name << "):\n"
+            << "Start: [" << line.pt0_in_model.head<2>().transpose() << "]\n"
+            << "End: [" << line.pt1_in_model.head<2>().transpose() << "]\n"
+            << "Line: [" << line.line_in_model.transpose() << "]";
 }
 
 
