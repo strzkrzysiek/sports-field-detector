@@ -4,8 +4,6 @@
 # example images
 /examples/*
 
-# MacOS files
-.DS_Store
-
-# VS Code files
-.vscode
+# hidden files, but .gitignore
+.*
+!/.gitignore
