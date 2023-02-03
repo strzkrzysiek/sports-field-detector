@@ -14,15 +14,20 @@ public:
     std::vector<Vec3> line_pixels_in_camera;
   };
 
-  struct Filter {
+  class Filter {
+  public:
     virtual cv::Mat operator()(const cv::Mat& image) const = 0;
     virtual ~Filter() = default;
   };
 
+  explicit LinePixelExtractor(const Mat3& camera_matrix)
+      : camera_matrix_(camera_matrix) {}
+
   LinePixelExtractor& addFilter(std::unique_ptr<Filter>&& filter);
-  Result extract(const cv::Mat& image, const Mat3& camera_matrix);
+  Result extract(const cv::Mat& image) const;
 
 private:
+  const Mat3 camera_matrix_;
   std::vector<std::unique_ptr<Filter>> filters_;
 };
 
@@ -73,7 +78,6 @@ private:
   const Scalar eigenval_ratio_;
   const uint block_size_;
   const uint aperture_size_;
-
 };
 
 

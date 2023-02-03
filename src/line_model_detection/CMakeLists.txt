@@ -4,6 +4,7 @@ find_package(OpenCV 4 REQUIRED)
 find_package(Ceres REQUIRED)
 
 add_library(line_model_detection
+  line_detector.cpp
   line_model.cpp
   line_model_defs.cpp
   line_model_detector.cpp

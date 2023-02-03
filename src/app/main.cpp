@@ -88,9 +88,11 @@ int main(int argc, char* argv[]) {
     he::LineModel tennis_court_model = he::defineTennisCourtModel();
 
     he::LineModelDetector detector;
-    cv::Mat output = detector.detect(input_image);
+    auto result = detector.detect(input_image);
 
-    cv::imshow("Output image", output);
+    for (const auto& [window_name, display_image] : result) {
+      cv::imshow(window_name, display_image);
+    }
 
     cv::imshow("Model image", tennis_court_model.getImage());
     cv::waitKey(0);

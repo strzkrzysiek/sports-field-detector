@@ -27,7 +27,7 @@ using Mat3T = Eigen::Matrix<T, 3, 3>;
 using Mat3 = Mat3T<Scalar>;
 
 
-// Conversions
+// Type conversions
 
 template <class OutputType, class InputType, int Rows, int Cols>
 inline Eigen::Matrix<OutputType, Rows, Cols> toEigen(const cv::Matx<InputType, Rows, Cols>& mat_cv) {
@@ -69,6 +69,16 @@ inline typename details::RT_toOpenCV<OutputType, Rows,Cols>::return_type toOpenC
   typename details::RT_toOpenCV<OutputType, Rows,Cols>::return_type result;
   cv::eigen2cv(mat_eigen_output_type, result);
   return result;
+}
+
+// Conversions
+
+inline Scalar deg2rad(Scalar degrees) {
+  return degrees * CV_PI / 180.0;
+}
+
+inline Scalar rad2deg(Scalar radians) {
+  return radians * 180.0 / CV_PI;
 }
 
 } // hawkeye

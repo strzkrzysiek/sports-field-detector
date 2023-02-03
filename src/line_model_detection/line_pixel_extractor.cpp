@@ -9,14 +9,18 @@
 
 namespace hawkeye {
 
+// LinePixelExtractor /////////////////////////////////////////////////////////
+
 LinePixelExtractor& LinePixelExtractor::addFilter(std::unique_ptr<Filter>&& filter) {
   filters_.emplace_back(std::move(filter));
 
   return *this;
 }
 
-LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image, const Mat3& camera_matrix) {
+LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image) const {
   CHECK_GT(filters_.size(), 0) << "No LinePixelExtractor filters defined.";
+
+  LOG(INFO) << "Extracting line pixels with " << filters_.size() << " filters.";
 
   Result result;
 
@@ -36,15 +40,20 @@ LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image, con
   std::vector<cv::Point> pixel_coords;
   cv::findNonZero(result.line_pixel_image, pixel_coords);
 
-  Mat3 camera_matrix_inv = camera_matrix.inverse();
+  Mat3 camera_matrix_inv = camera_matrix_.inverse();
 
   std::transform(pixel_coords.begin(),
                  pixel_coords.end(),
                  std::back_inserter(result.line_pixels_in_camera),
                  [&camera_matrix_inv](const cv::Point& pt) { return camera_matrix_inv * Vec3(pt.x, pt.y, 1.0); });
 
+  LOG(INFO) << "Extracted " << result.line_pixels_in_camera.size() << "/" << image.total()
+            << " (" << result.line_pixels_in_camera.size() * 100. / image.total() << "%)";
+
   return result;
 }
+
+// BrightPixelFilter //////////////////////////////////////////////////////////
 
 cv::Mat BrightPixelFilter::operator()(const cv::Mat& image) const {
   LOG(INFO) << "BrightPixelFilter (thr: " << threshold_ << ")";
@@ -81,6 +90,8 @@ uint BrightPixelFilter::calculateBrightnessThreshold(Scalar top_percentile,
   return threshold;
 }
 
+// DarkNeighborhoodFilter /////////////////////////////////////////////////////
+
 cv::Mat DarkNeighborhoodFilter::operator()(const cv::Mat& image) const {
   LOG(INFO) << "DarkNeighborhoodFilter (thr: " << threshold_ << ", dist: " << distance_ << ")";
 
@@ -99,6 +110,8 @@ cv::Mat DarkNeighborhoodFilter::operator()(const cv::Mat& image) const {
 
   return has_dark_neighborhood;
 }
+
+// LineFeatureFilter //////////////////////////////////////////////////////////
 
 cv::Mat LineFeatureFilter::operator()(const cv::Mat& image) const {
   LOG(INFO) << "LineFeatureFilter (eigenval thr: " << eigenval_threshold_ << ", ratio: " << eigenval_ratio_
