@@ -9,7 +9,7 @@
 
 namespace hawkeye {
 
-LineModel::LineModel(unsigned width, unsigned height, unsigned line_width)
+LineModel::LineModel(uint width, uint height, uint line_width)
     : model_size_(width, height),
       line_width_(line_width),
       model_image_(cv::Mat::zeros(model_size_, CV_8U)) {

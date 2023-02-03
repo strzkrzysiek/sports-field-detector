@@ -6,5 +6,10 @@
 
 namespace hawkeye {
 
+class LineModelDetector {
+public:
+  cv::Mat detect(const cv::Mat& image);
+};
+
 
 } // namespace hawkeye

@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED COMPONENTS program_options REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
 find_package(glog REQUIRED)
 find_package(OpenCV 4 COMPONENTS highgui REQUIRED)
 

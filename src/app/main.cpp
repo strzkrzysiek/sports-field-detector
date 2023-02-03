@@ -8,11 +8,12 @@
 
 #include "line_model_detection/line_model.h"
 #include "line_model_detection/line_model_defs.h"
+#include "line_model_detection/line_model_detector.h"
 
 namespace he = hawkeye;
 namespace po = boost::program_options;
 
-cv::Mat readImage(const std::string& imgpath, unsigned width, unsigned height) {
+cv::Mat readImage(const std::string& imgpath, uint width, uint height) {
   LOG(INFO) << "Opening image: " << imgpath;
 
   std::ifstream ifs(imgpath, std::ios::in | std::ios::binary);
@@ -22,7 +23,7 @@ cv::Mat readImage(const std::string& imgpath, unsigned width, unsigned height) {
   }
 
   ifs.seekg(0, ifs.end);
-  unsigned file_size = ifs.tellg();
+  uint file_size = ifs.tellg();
   ifs.seekg(0, ifs.beg);
 
   if (file_size != width * height) {
@@ -31,7 +32,7 @@ cv::Mat readImage(const std::string& imgpath, unsigned width, unsigned height) {
   }
 
   cv::Mat image(height, width, CV_8U);
-  ifs.read(reinterpret_cast<char*>(image.data), width * height);
+  ifs.read(image.ptr<char>(), width * height);
 
   ifs.close();
 
@@ -49,14 +50,14 @@ int main(int argc, char* argv[]) {
     // PROGRAM ARGUMENTS ///////////////////////////////////////////////////////////
     
     std::string imgpath;
-    unsigned width, height;
+    uint width, height;
 
     po::options_description po_desc("Usage");
     po_desc.add_options()
       ("help", "Produce help message")
       ("imgpath,p", po::value<std::string>(&imgpath)->required(), "Path to the raw image file")
-      ("width,w", po::value<unsigned>(&width)->required(), "Image width")
-      ("height,h", po::value<unsigned>(&height)->required(), "Image height");
+      ("width,w", po::value<uint>(&width)->required(), "Image width")
+      ("height,h", po::value<uint>(&height)->required(), "Image height");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, po_desc), vm);
@@ -85,6 +86,11 @@ int main(int argc, char* argv[]) {
     cv::imshow("Input image", input_image);
 
     he::LineModel tennis_court_model = he::defineTennisCourtModel();
+
+    he::LineModelDetector detector;
+    cv::Mat output = detector.detect(input_image);
+
+    cv::imshow("Output image", output);
 
     cv::imshow("Model image", tennis_court_model.getImage());
     cv::waitKey(0);
