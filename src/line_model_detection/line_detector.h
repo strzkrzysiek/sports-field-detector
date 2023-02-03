@@ -10,7 +10,7 @@
 namespace hawkeye {
 
 struct DetectedLine {
-  enum class Group { Undefined, A, B };
+  enum class Group { Undefined, A, B, ToBeRemoved };
 
   Group group = Group::Undefined;
   Vec3 line_in_camera;

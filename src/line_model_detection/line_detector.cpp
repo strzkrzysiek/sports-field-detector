@@ -118,6 +118,39 @@ void HoughTransformProb::operator()(const LinePixelExtractor::Result& lpe_result
 
 // NonMaximalSuppression //////////////////////////////////////////////////////
 
+void NonMaximalSuppression::operator()(const LinePixelExtractor::Result& /* lpe_result */,
+                                       LineDetector::Result& ld_result,
+                                       const Mat3& /* camera_matrix */) const {
+  LOG(INFO) << "NonMaximalSuppression (dist_deg: " << rad2deg(allowed_distance_) << ", propagate: " << propagate_suppressed_ << ")";
+
+  auto& lines = ld_result.lines;
+
+  //std::vector<bool> selected_lines(lines.size(), true);
+  for (uint i = 0; i < lines.size(); i++) {
+    if (!propagate_suppressed_ && lines[i].group == DetectedLine::Group::ToBeRemoved)
+      continue;
+    
+    for (uint j = i + 1; j < lines.size(); j++) {
+      if (lines[j].group == DetectedLine::Group::ToBeRemoved)
+        continue;
+
+      Scalar cos_dist = lines[i].line_in_camera.dot(lines[j].line_in_camera);
+      Scalar sin_dist = std::sqrt(1.0 - cos_dist * cos_dist);
+
+      if (sin_dist > allowed_distance_)
+        continue;
+
+      lines[j].group = DetectedLine::Group::ToBeRemoved;
+      DLOG(INFO) << "Suppressed line: " << j;
+    }
+  }
+
+  uint original_size = lines.size();
+  std::erase_if(lines, [](auto& line) { return line.group == DetectedLine::Group::ToBeRemoved; });
+
+  LOG(INFO) << "Suppressed " << original_size - lines.size() << " lines.";
+}
+
 // LineOptimizer //////////////////////////////////////////////////////////////
 
 // IdealPointClassifier ///////////////////////////////////////////////////////
