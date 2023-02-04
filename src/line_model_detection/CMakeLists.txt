@@ -8,6 +8,7 @@ add_library(line_model_detection
   line_model.cpp
   line_model_defs.cpp
   line_model_detector.cpp
+  line_optimization_problem.cpp
   line_pixel_extractor.cpp
 )
 

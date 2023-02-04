@@ -45,7 +45,7 @@ LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image) con
   std::transform(pixel_coords.begin(),
                  pixel_coords.end(),
                  std::back_inserter(result.line_pixels_in_camera),
-                 [&camera_matrix_inv](const cv::Point& pt) { return camera_matrix_inv * Vec3(pt.x, pt.y, 1.0); });
+                 [&camera_matrix_inv](const cv::Point& pt) { return Vec3(camera_matrix_inv * Vec3(pt.x, pt.y, 1.0)); });
 
   LOG(INFO) << "Extracted " << result.line_pixels_in_camera.size() << "/" << image.total()
             << " (" << result.line_pixels_in_camera.size() * 100. / image.total() << "%)";

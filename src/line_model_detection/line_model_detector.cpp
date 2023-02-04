@@ -91,6 +91,7 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
   uint max_line_gap = std::min(image.cols, image.rows) / 5;
   int n_strongest = 100;
   Scalar nms_distance = deg2rad(2.0);
+  Scalar optimizer_outlier_threshold = deg2rad(0.3);
 
   (void)min_line_length;
   (void)max_line_gap;
@@ -104,6 +105,7 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
                                                     min_line_length,
                                                     max_line_gap))
       .addStep(std::make_unique<NonMaximalSuppression>(nms_distance, true))
+      .addStep(std::make_unique<LineOptimizer>(optimizer_outlier_threshold))
       .detect(lpe_result);
 
   return {

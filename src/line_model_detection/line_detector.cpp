@@ -7,6 +7,8 @@
 #include <glog/logging.h>
 #include <opencv2/imgproc.hpp>
 
+#include "line_model_detection/line_optimization_problem.h"
+
 namespace hawkeye {
 
 // LineDetector ///////////////////////////////////////////////////////////////
@@ -152,6 +154,22 @@ void NonMaximalSuppression::operator()(const LinePixelExtractor::Result& /* lpe_
 }
 
 // LineOptimizer //////////////////////////////////////////////////////////////
+
+void LineOptimizer::operator()(const LinePixelExtractor::Result& lpe_result,
+                               LineDetector::Result& ld_result,
+                               const Mat3& /* camera_matrix */) const {
+  LOG(INFO) << "LineOptimizer (outlier_thr_deg: " << rad2deg(outlier_threshold_) << ")";
+
+  LineOptimizationProblem problem(lpe_result.line_pixels_in_camera, outlier_threshold_);
+  
+  for (auto& line : ld_result.lines) {
+    Vec3 optimized_line_in_camera = problem.optimize(line.line_in_camera);
+
+    LOG(INFO) << "Optimized line: [" << line.line_in_camera.transpose() << "] => "
+              << "[" << optimized_line_in_camera.transpose() << "]";
+    line.line_in_camera = optimized_line_in_camera;
+  }
+}
 
 // IdealPointClassifier ///////////////////////////////////////////////////////
 
