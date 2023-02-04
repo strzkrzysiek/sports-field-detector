@@ -25,7 +25,13 @@ void LineModel::addLine(const std::string& name,
   ModelLine line;
 
   line.name = name;
-  line.group = (pt0[1] == pt1[1]) ? ModelLine::Group::X : ModelLine::Group::Y;
+  if (pt0[1] == pt1[1]) {
+    line.group = ModelLine::Group::X;
+    x_group_ids_.push_back(lines_.size());
+  } else {
+    line.group = ModelLine::Group::Y;
+    y_group_ids_.push_back(lines_.size());
+  }
   
   if (pt0[0] <= pt1[0] && pt0[1] <= pt1[1]) {
     line.pt0 = pt0;

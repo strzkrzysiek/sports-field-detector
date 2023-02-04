@@ -11,6 +11,7 @@ namespace hawkeye {
 
 struct DetectedLine {
   enum class Group { Undefined, A, B, ToBeRemoved };
+  static const char* group2str(Group group);
 
   Group group = Group::Undefined;
   Vec3 line_in_camera;
@@ -20,6 +21,8 @@ class LineDetector {
 public:
   struct Result {
     std::vector<DetectedLine> lines;
+    std::vector<uint> a_group_ids;
+    std::vector<uint> b_group_ids;
   };
 
   class Step {
@@ -129,6 +132,8 @@ public:
                   const Mat3& camera_matrix) const override;
 
 private:
+  void findParallelGroup(std::vector<DetectedLine>& lines, DetectedLine::Group group) const;
+
   Scalar allowed_distance_;
 };
 

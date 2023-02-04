@@ -31,7 +31,7 @@ public:
 
   const ImageSize& getModelSize() const { return model_size_; }
   uint getLineWidth() const { return line_width_; }
-  const std::vector<ModelLine> getLines() const { return lines_; }
+  const std::vector<ModelLine>& getLines() const { return lines_; }
   const cv::Mat& getImage() const { return model_image_; }
 
 private:
@@ -41,6 +41,8 @@ private:
   uint line_width_;
   std::vector<ModelLine> lines_;
   cv::Mat model_image_;
+  std::vector<uint> x_group_ids_;
+  std::vector<uint> y_group_ids_;
 };
 
 } // namespace hawkeye

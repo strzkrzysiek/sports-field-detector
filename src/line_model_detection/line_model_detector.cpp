@@ -49,7 +49,15 @@ cv::Mat visualizeDetectedLines(const cv::Mat& image,
       pt1 = ImagePoint(pt1_in_image[0], pt1_in_image[1]);
     }
 
-    cv::line(canvas, cv::Point(pt0), cv::Point(pt1), cv::Scalar(0, 0, 255), 2, cv::LINE_AA);
+    cv::Scalar color;
+    switch (detected_line.group) {
+    case DetectedLine::Group::Undefined:   color = cv::Scalar(255,   0,   0); break;
+    case DetectedLine::Group::A:           color = cv::Scalar(  0, 255,   0); break;
+    case DetectedLine::Group::B:           color = cv::Scalar(  0,   0, 255); break;
+    case DetectedLine::Group::ToBeRemoved: color = cv::Scalar(  0,   0,   0); break;
+    }
+
+    cv::line(canvas, cv::Point(pt0), cv::Point(pt1), color, 2, cv::LINE_AA);
   }
 
   return canvas;
@@ -99,6 +107,8 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
   Scalar nms_distance_2 = deg2rad(0.5);
   bool nms_propagate_suppressed_2 = false;
 
+  Scalar ideal_point_dist = deg2rad(2.0);
+
   (void)min_line_length;
   (void)max_line_gap;
   (void)n_strongest;
@@ -113,6 +123,7 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
       .addStep(std::make_unique<NonMaximalSuppression>(nms_distance_1, nms_propagate_suppressed_1))
       .addStep(std::make_unique<LineOptimizer>(optimizer_outlier_threshold))
       .addStep(std::make_unique<NonMaximalSuppression>(nms_distance_2, nms_propagate_suppressed_2))
+      .addStep(std::make_unique<IdealPointClassifier>(ideal_point_dist))
       .detect(lpe_result);
 
   return {
