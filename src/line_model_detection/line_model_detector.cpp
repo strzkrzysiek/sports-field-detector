@@ -90,8 +90,14 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
   uint min_line_length = std::min(image.cols, image.rows) / 5;
   uint max_line_gap = std::min(image.cols, image.rows) / 5;
   int n_strongest = 100;
-  Scalar nms_distance = deg2rad(2.0);
+
+  Scalar nms_distance_1 = deg2rad(2.0);
+  bool nms_propagate_suppressed_1 = true;
+
   Scalar optimizer_outlier_threshold = deg2rad(0.3);
+  
+  Scalar nms_distance_2 = deg2rad(0.5);
+  bool nms_propagate_suppressed_2 = false;
 
   (void)min_line_length;
   (void)max_line_gap;
@@ -104,8 +110,9 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
                                                     votes_threshold,
                                                     min_line_length,
                                                     max_line_gap))
-      .addStep(std::make_unique<NonMaximalSuppression>(nms_distance, true))
+      .addStep(std::make_unique<NonMaximalSuppression>(nms_distance_1, nms_propagate_suppressed_1))
       .addStep(std::make_unique<LineOptimizer>(optimizer_outlier_threshold))
+      .addStep(std::make_unique<NonMaximalSuppression>(nms_distance_2, nms_propagate_suppressed_2))
       .detect(lpe_result);
 
   return {
