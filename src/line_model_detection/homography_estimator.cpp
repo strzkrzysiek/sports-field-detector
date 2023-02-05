@@ -1,3 +1,5 @@
+// Copyright 2023 Krzysztof Wrobel
+
 #include "line_model_detection/homography_estimator.h"
 
 #include <cmath>

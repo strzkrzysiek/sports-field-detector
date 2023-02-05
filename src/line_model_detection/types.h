@@ -1,3 +1,5 @@
+// Copyright 2023 Krzysztof Wrobel
+
 #pragma once
 
 #include <Eigen/Core>

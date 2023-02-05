@@ -1,3 +1,5 @@
+# Copyright 2023 Krzysztof Wrobel
+
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(glog REQUIRED)
 find_package(OpenCV 4 REQUIRED)

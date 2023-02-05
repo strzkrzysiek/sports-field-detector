@@ -1,5 +1,6 @@
-#include <exception>
+// Copyright 2023 Krzysztof Wrobel
 
+#include <exception>
 #include <string>
 
 #include <boost/program_options.hpp>

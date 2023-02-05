@@ -1,3 +1,5 @@
+# Copyright 2023 Krzysztof Wrobel
+
 cmake_minimum_required(VERSION 3.12)
 
 project(court-lines)

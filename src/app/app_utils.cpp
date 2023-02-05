@@ -1,3 +1,5 @@
+// Copyright 2023 Krzysztof Wrobel
+
 #include "app/app_utlis.h"
 
 #include <fstream>

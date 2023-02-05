@@ -1,3 +1,5 @@
+// Copyright 2023 Krzysztof Wrobel
+
 #include "line_model_detection/line_model_detector.h"
 
 #include <cmath>
