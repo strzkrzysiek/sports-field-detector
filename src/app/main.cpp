@@ -1,11 +1,12 @@
 #include <exception>
-#include <fstream>
+
 #include <string>
 
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
 #include <opencv2/highgui.hpp>
 
+#include "app/app_utlis.h"
 #include "line_model_detection/line_model.h"
 #include "line_model_detection/line_model_defs.h"
 #include "line_model_detection/line_model_detector.h"
@@ -13,32 +14,46 @@
 namespace he = hawkeye;
 namespace po = boost::program_options;
 
-cv::Mat readImage(const std::string& imgpath, uint width, uint height) {
-  LOG(INFO) << "Opening image: " << imgpath;
+int runApp(const std::string& imgpath, const std::string& outpath, uint width, uint height, bool visualize, bool debug) {
+  if (debug) visualize = true;
+  (void)outpath;
+  
+  // READING IMAGE ///////////////////////////////////////////////////////////////
 
-  std::ifstream ifs(imgpath, std::ios::in | std::ios::binary);
-  if (!ifs) {
-    LOG(ERROR) << "Could not open the file for reading: " << imgpath;
-    return cv::Mat();
+  cv::Mat input_image = he::readImage(imgpath, width, height);
+  if (input_image.empty()) {
+    return -1;
   }
 
-  ifs.seekg(0, ifs.end);
-  uint file_size = ifs.tellg();
-  ifs.seekg(0, ifs.beg);
-
-  if (file_size != width * height) {
-    LOG(ERROR) << "Incorrect file size: " << file_size << ", expected: " << width * height;
-    return cv::Mat();
+  if (visualize) {
+    cv::imshow("Image", input_image);
+    cv::waitKey(1);
   }
 
-  cv::Mat image(height, width, CV_8U);
-  ifs.read(image.ptr<char>(), width * height);
+  // PROCESSING IMAGE ////////////////////////////////////////////////////////////
 
-  ifs.close();
+  he::LineModel tennis_court_model = he::defineTennisCourtModel();
+  he::Mat3 camera_matrix = he::fakeCameraMatrix(input_image.size());
 
-  return image;
+  he::LineModelDetector detector(tennis_court_model);
+  auto result = detector.detect(input_image, camera_matrix, debug);
+
+  // PRESENTING RESULTS //////////////////////////////////////////////////////////
+
+  if (visualize) {
+    if (result.model2camera_image_homography) {
+      cv::imshow("Image", result.visualization);
+    }
+
+    for (const auto& [window_name, display_image] : result.debug_images) {
+      cv::imshow(window_name, display_image);
+    }
+    cv::waitKey(0);
+    cv::destroyAllWindows();
+  }
+
+  return 0;
 }
-
 
 int main(int argc, char* argv[]) {
   try {
@@ -50,14 +65,18 @@ int main(int argc, char* argv[]) {
     // PROGRAM ARGUMENTS ///////////////////////////////////////////////////////////
     
     std::string imgpath;
+    std::string outpath;
     uint width, height;
 
     po::options_description po_desc("Usage");
     po_desc.add_options()
       ("help", "Produce help message")
       ("imgpath,p", po::value<std::string>(&imgpath)->required(), "Path to the raw image file")
+      ("outpath,o", po::value<std::string>(&outpath), "Path to the output CSV file (optional)")
       ("width,w", po::value<uint>(&width)->required(), "Image width")
-      ("height,h", po::value<uint>(&height)->required(), "Image height");
+      ("height,h", po::value<uint>(&height)->required(), "Image height")
+      ("visualize,v", "Show visualized input and output")
+      ("debug,d", "Show debug images (implies --visualize)");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, po_desc), vm);
@@ -73,41 +92,8 @@ int main(int argc, char* argv[]) {
       LOG(ERROR) << "Program options error: " << e.what() << '\n' << po_desc;
       return -1;
     }
-    
-    // READING IMAGE ///////////////////////////////////////////////////////////////
 
-    cv::Mat input_image = readImage(imgpath, width, height);
-    if (input_image.empty()) {
-      return -1;
-    }
-
-    // PROCESSING IMAGE ////////////////////////////////////////////////////////////
-
-    cv::imshow("Image", input_image);
-    cv::waitKey(1);
-
-    he::LineModel tennis_court_model = he::defineTennisCourtModel();
-
-    he::Scalar cx = input_image.cols / 2.0;
-    he::Scalar cy = input_image.rows / 2.0;
-    he::Scalar f = (cx + cy) * 2;
-    he::Mat3 assumed_camera_matrix;
-    assumed_camera_matrix << f,  0., cx,
-                             0., f,  cy,
-                             0., 0., 1.;
-
-    he::LineModelDetector detector(tennis_court_model);
-    auto result = detector.detect(input_image, assumed_camera_matrix, true);
-
-    if (result.model2camera_image_homography) {
-      cv::imshow("Image", result.visualization);
-    }
-
-    for (const auto& [window_name, display_image] : result.debug_images) {
-      cv::imshow(window_name, display_image);
-    }
-    cv::waitKey(0);
-    cv::destroyAllWindows();
+    return runApp(imgpath, outpath, width, height, vm.count("visualize"), vm.count("debug"));
 
   } catch(const std::exception& e) {
     LOG(ERROR) << "Error: " << e.what();
