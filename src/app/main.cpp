@@ -83,18 +83,29 @@ int main(int argc, char* argv[]) {
 
     // PROCESSING IMAGE ////////////////////////////////////////////////////////////
 
-    // cv::imshow("Input image", input_image);
+    cv::imshow("Image", input_image);
+    cv::waitKey(1);
 
     he::LineModel tennis_court_model = he::defineTennisCourtModel();
 
-    he::LineModelDetector detector(tennis_court_model);
-    auto result = detector.detect(input_image);
+    he::Scalar cx = input_image.cols / 2.0;
+    he::Scalar cy = input_image.rows / 2.0;
+    he::Scalar f = (cx + cy) * 2;
+    he::Mat3 assumed_camera_matrix;
+    assumed_camera_matrix << f,  0., cx,
+                             0., f,  cy,
+                             0., 0., 1.;
 
-    for (const auto& [window_name, display_image] : result) {
-      cv::imshow(window_name, display_image);
+    he::LineModelDetector detector(tennis_court_model);
+    auto result = detector.detect(input_image, assumed_camera_matrix, true);
+
+    if (result.model2camera_image_homography) {
+      cv::imshow("Image", result.visualization);
     }
 
-    // cv::imshow("Model image", tennis_court_model.getImage());
+    for (const auto& [window_name, display_image] : result.debug_images) {
+      cv::imshow(window_name, display_image);
+    }
     cv::waitKey(0);
     cv::destroyAllWindows();
 

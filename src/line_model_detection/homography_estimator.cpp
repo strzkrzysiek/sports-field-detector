@@ -46,24 +46,22 @@ std::optional<Mat3> HomographyEstimator::estimate(const LinePixelExtractor::Resu
   auto& y_ids = model_.getYGroupIds();
 
   if (a_ids.size() < 2) {
-    LOG(ERROR) << "Insufficient number of lines in group A";
+    LOG(ERROR) << "Insufficient number of lines in group A: " << a_ids.size();
     return {};
   }
 
   if (b_ids.size() < 2) {
-    LOG(ERROR) << "Insufficient number of lines in group B";
+    LOG(ERROR) << "Insufficient number of lines in group B: " << b_ids.size();
     return {};
   }
 
   CHECK_GT(x_ids.size(), 2) << "Check model definition! Insufficient number of lines in group X.";
   CHECK_GT(y_ids.size(), 2) << "Check model definition! Insufficient number of lines in group Y.";
 
-  LOG(INFO) << "Estimating homography with" << tests_.size() << " tests.";
+  LOG(INFO) << "Estimating homography with " << tests_.size() << " tests.";
 
   LOG(INFO) << "Detected lines: A(" << a_ids.size() << "), B(" << b_ids.size() << ")";
   LOG(INFO) << "Model lines: X(" << x_ids.size() << "), Y(" << y_ids.size() << ")";
-
-
 
   printIds("A", a_ids);
   printIds("B", b_ids);
@@ -111,10 +109,10 @@ std::optional<Mat3> HomographyEstimator::estimate(const LinePixelExtractor::Resu
           src_pts[2] = model_lines_as_points[y_pair.first];
           src_pts[3] = model_lines_as_points[y_pair.second];
 
-          LOG(INFO) << "Test: A (" << a_pair.first << ", " << a_pair.second << "), "
-                    << "B (" << b_pair.first << ", " << b_pair.second << "), "
-                    << "X (" << x_pair.first << ", " << x_pair.second << "), "
-                    << "Y (" << y_pair.first << ", " << y_pair.second << ")";
+          DLOG(INFO) << "Test: A (" << a_pair.first << ", " << a_pair.second << "), "
+                     << "B (" << b_pair.first << ", " << b_pair.second << "), "
+                     << "X (" << x_pair.first << ", " << x_pair.second << "), "
+                     << "Y (" << y_pair.first << ", " << y_pair.second << ")";
 
           cv::Matx33f H_xa_yb = cv::findHomography(src_pts, dst_pts_xa_yb, 0);
           cv::Matx33f H_xb_ya = cv::findHomography(src_pts, dst_pts_xb_ya, 0);
@@ -128,11 +126,7 @@ std::optional<Mat3> HomographyEstimator::estimate(const LinePixelExtractor::Resu
             auto score_opt = validateHomography(model2cam, lpe_result, ld_result);
 
             if (score_opt && score_opt.value() > best_score) {
-              // LOG(INFO) << "Test: A (" << a_pair.first << ", " << a_pair.second << "), "
-              //           << "B (" << b_pair.first << ", " << b_pair.second << "), "
-              //           << "X (" << x_pair.first << ", " << x_pair.second << "), "
-              //           << "Y (" << y_pair.first << ", " << y_pair.second << ")";
-              LOG(INFO) << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Best score: " << score_opt.value();
+              LOG(INFO) << "Best score: " << score_opt.value();
               best_score = score_opt.value();
               best_model2cam = model2cam;
             }
@@ -208,12 +202,12 @@ bool IsotropicScalingTest::operator()(const LinePixelExtractor::Result& /* lpe_r
                                       const Mat3& model2camera_homography,
                                       const Mat3& /* camera_matrix */,
                                       const LineModel& /* model */) const {
-  // LOG(INFO) << "IsotropicScalingTest (min_beta: " << min_beta_ << ", max_beta: " << max_beta_ << ")";
+  DLOG(INFO) << "IsotropicScalingTest (min_beta: " << min_beta_ << ", max_beta: " << max_beta_ << ")";
 
   Scalar beta2 = model2camera_homography.col(1).squaredNorm() / model2camera_homography.col(0).squaredNorm();
   Scalar beta = std::sqrt(beta2);
 
-  LOG(INFO) << "Calculated beta: " << beta;
+  DLOG(INFO) << "Calculated beta: " << beta;
 
   return (beta > min_beta_ && beta < max_beta_);
 }
@@ -225,7 +219,7 @@ Scalar ModelAlignmentScoring::operator()(const LinePixelExtractor::Result& lpe_r
                                          const Mat3& model2camera_homography,
                                          const Mat3& camera_matrix,
                                          const LineModel& model) const {
-  // LOG(INFO) << "ModelAlignmentScoring (hit_award: " << hit_award_ << ", miss_penalty: " << miss_penalty_ << ")";
+  DLOG(INFO) << "ModelAlignmentScoring (hit_award: " << hit_award_ << ", miss_penalty: " << miss_penalty_ << ")";
 
   cv::Mat warped_model = cv::Mat::zeros(lpe_result.line_pixel_image.size(), CV_8U);
   drawModelLines(warped_model, model, model2camera_homography, camera_matrix, cv::Scalar(255));
@@ -238,7 +232,7 @@ Scalar ModelAlignmentScoring::operator()(const LinePixelExtractor::Result& lpe_r
 
   Scalar score = hit_award_ * hit_count - miss_penalty_ * miss_count;
 
-  LOG(INFO) << "hits: " << hit_count << ", misses: " << miss_count << ", score: " << score;
+  LOG(INFO) << "ModelAlignmentScoring - hits: " << hit_count << ", misses: " << miss_count << ", score: " << score;
 
   return score;
 }

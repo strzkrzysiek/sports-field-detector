@@ -36,7 +36,7 @@ LineDetector& LineDetector::addStep(std::unique_ptr<Step>&& step) {
 LineDetector::Result LineDetector::detect(const LinePixelExtractor::Result& lpe_result) const {
   CHECK_GT(steps_.size(), 0) << "No LineDetector steps defined.";
 
-  LOG(INFO) << "Detecting lines in" << steps_.size() << " steps.";
+  LOG(INFO) << "Detecting lines in " << steps_.size() << " steps.";
   
   Result ld_result;
 
@@ -238,11 +238,14 @@ void IdealPointClassifier::findParallelGroup(std::vector<DetectedLine>& lines, D
   // Generate all possible line pairs and calculate their intersection points
   for (uint i = 0; i < remaining_line_ids.size(); i++) {
     for (uint j = i + 1; j < remaining_line_ids.size(); j++) {
-      Intersection intersection;
-      intersection.line0_id = i;
-      intersection.line1_id = j;
+      uint id0 = remaining_line_ids[i];
+      uint id1 = remaining_line_ids[j];
 
-      intersection.pt_in_camera = (lines[i].line_in_camera.cross(lines[j].line_in_camera)).normalized();
+      Intersection intersection;
+      intersection.line0_id = id0;
+      intersection.line1_id = id1;
+
+      intersection.pt_in_camera = (lines[id0].line_in_camera.cross(lines[id1].line_in_camera)).normalized();
 
       intersections.push_back(intersection);
     }
