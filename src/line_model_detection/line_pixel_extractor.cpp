@@ -17,7 +17,8 @@ LinePixelExtractor& LinePixelExtractor::addFilter(std::unique_ptr<Filter>&& filt
   return *this;
 }
 
-LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image) const {
+LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image,
+                                                       uint dilate_line_pixel_image) const {
   CHECK_GT(filters_.size(), 0) << "No LinePixelExtractor filters defined.";
 
   LOG(INFO) << "Extracting line pixels with " << filters_.size() << " filters.";
@@ -36,6 +37,10 @@ LinePixelExtractor::Result LinePixelExtractor::extract(const cv::Mat& image) con
       result.line_pixel_image &= filtered_pixels;
     }
   }
+
+  cv::dilate(result.line_pixel_image,
+             result.dilated_line_pixel_image,
+             cv::Mat::ones(dilate_line_pixel_image, dilate_line_pixel_image, CV_8U));
 
   std::vector<cv::Point> pixel_coords;
   cv::findNonZero(result.line_pixel_image, pixel_coords);

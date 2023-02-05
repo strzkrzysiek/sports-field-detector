@@ -29,10 +29,14 @@ public:
                const ImagePoint& pt0,
                const ImagePoint& pt1);
 
-  const ImageSize& getModelSize() const { return model_size_; }
-  uint getLineWidth() const { return line_width_; }
-  const std::vector<ModelLine>& getLines() const { return lines_; }
-  const cv::Mat& getImage() const { return model_image_; }
+  void commit();
+
+  const ImageSize& getModelSize() const;
+  uint getLineWidth() const;
+  const std::vector<ModelLine>& getLines() const;
+  const cv::Mat& getImage() const;
+  const std::vector<uint>& getXGroupIds() const;
+  const std::vector<uint>& getYGroupIds() const;
 
 private:
   void drawLine(const ModelLine& line);
@@ -43,6 +47,8 @@ private:
   cv::Mat model_image_;
   std::vector<uint> x_group_ids_;
   std::vector<uint> y_group_ids_;
+
+  bool committed;
 };
 
 } // namespace hawkeye

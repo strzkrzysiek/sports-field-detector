@@ -11,6 +11,7 @@ class LinePixelExtractor {
 public:
   struct Result {
     cv::Mat line_pixel_image;
+    cv::Mat dilated_line_pixel_image;
     std::vector<Vec3> line_pixels_in_camera;
   };
 
@@ -24,7 +25,7 @@ public:
       : camera_matrix_(camera_matrix) {}
 
   LinePixelExtractor& addFilter(std::unique_ptr<Filter>&& filter);
-  Result extract(const cv::Mat& image) const;
+  Result extract(const cv::Mat& image, uint dilate_line_pixel_image = 1) const;
 
 private:
   const Mat3 camera_matrix_;

@@ -45,6 +45,8 @@ LineModel defineTennisCourtModel() {
                  ImagePoint(  19*12 - 0.5, 19*12 - 0.5),
                  ImagePoint(  19*12 - 0.5, 61*12 - 0.5));
 
+  model.commit();
+
   return model; 
 }
 

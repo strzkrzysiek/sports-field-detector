@@ -83,18 +83,18 @@ int main(int argc, char* argv[]) {
 
     // PROCESSING IMAGE ////////////////////////////////////////////////////////////
 
-    cv::imshow("Input image", input_image);
+    // cv::imshow("Input image", input_image);
 
     he::LineModel tennis_court_model = he::defineTennisCourtModel();
 
-    he::LineModelDetector detector;
+    he::LineModelDetector detector(tennis_court_model);
     auto result = detector.detect(input_image);
 
     for (const auto& [window_name, display_image] : result) {
       cv::imshow(window_name, display_image);
     }
 
-    cv::imshow("Model image", tennis_court_model.getImage());
+    // cv::imshow("Model image", tennis_court_model.getImage());
     cv::waitKey(0);
     cv::destroyAllWindows();
 

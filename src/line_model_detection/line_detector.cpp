@@ -36,7 +36,7 @@ LineDetector& LineDetector::addStep(std::unique_ptr<Step>&& step) {
 LineDetector::Result LineDetector::detect(const LinePixelExtractor::Result& lpe_result) const {
   CHECK_GT(steps_.size(), 0) << "No LineDetector steps defined.";
 
-  LOG(INFO) << "Detecting lines " << steps_.size() << " steps.";
+  LOG(INFO) << "Detecting lines in" << steps_.size() << " steps.";
   
   Result ld_result;
 

@@ -6,7 +6,6 @@
 #include "line_model_detection/line_pixel_extractor.h"
 #include "line_model_detection/types.h"
 
-
 namespace hawkeye {
 
 struct DetectedLine {

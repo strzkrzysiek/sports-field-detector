@@ -6,6 +6,8 @@
 #include <glog/logging.h>
 #include <opencv2/imgproc.hpp>
 
+#include "line_model_detection/drawing_routines.h"
+#include "line_model_detection/homography_estimator.h"
 #include "line_model_detection/line_pixel_extractor.h"
 #include "line_model_detection/line_detector.h"
 
@@ -17,48 +19,19 @@ cv::Mat visualizeDetectedLines(const cv::Mat& image,
   cv::Mat canvas;
   cv::cvtColor(image, canvas, cv::COLOR_GRAY2BGR);
 
-  Mat3 camera_matrix_invT = camera_matrix.inverse().transpose();
+  drawDetectedLines(canvas, ld_result.lines, camera_matrix);
 
-  Vec3 left_border_line(1., 0., 0.);
-  Vec3 right_border_line(1., 0., -image.cols);
-  Vec3 top_border_line(0., 1., 0.);
-  Vec3 bottom_border_line(0., 1., -image.rows);
+  return canvas;
+}
 
-  for (const auto& detected_line : ld_result.lines) {
-    const Vec3& line_in_camera = detected_line.line_in_camera;
-    Vec3 line_in_image = camera_matrix_invT * line_in_camera;
+cv::Mat visualizeDetectedModel(const cv::Mat& image,
+                               const LineModel& model,
+                               const Mat3& model2camera,
+                               const Mat3& camera_matrix) {
+  cv::Mat canvas;
+  cv::cvtColor(image, canvas, cv::COLOR_GRAY2BGR);
 
-    ImagePoint pt0, pt1;
-    if (std::abs(line_in_image[0]) > std::abs(line_in_image[1])) { // line is more vertical
-      Vec3 pt0_in_image = line_in_image.cross(top_border_line);
-      Vec3 pt1_in_image = line_in_image.cross(bottom_border_line);
-
-      pt0_in_image /= pt0_in_image[2];
-      pt1_in_image /= pt1_in_image[2];
-
-      pt0 = ImagePoint(pt0_in_image[0], pt0_in_image[1]);
-      pt1 = ImagePoint(pt1_in_image[0], pt1_in_image[1]);
-    } else {                                                       // line is more horizontal
-      Vec3 pt0_in_image = line_in_image.cross(left_border_line);
-      Vec3 pt1_in_image = line_in_image.cross(right_border_line);
-
-      pt0_in_image /= pt0_in_image[2];
-      pt1_in_image /= pt1_in_image[2];
-
-      pt0 = ImagePoint(pt0_in_image[0], pt0_in_image[1]);
-      pt1 = ImagePoint(pt1_in_image[0], pt1_in_image[1]);
-    }
-
-    cv::Scalar color;
-    switch (detected_line.group) {
-    case DetectedLine::Group::Undefined:   color = cv::Scalar(255,   0,   0); break;
-    case DetectedLine::Group::A:           color = cv::Scalar(  0, 255,   0); break;
-    case DetectedLine::Group::B:           color = cv::Scalar(  0,   0, 255); break;
-    case DetectedLine::Group::ToBeRemoved: color = cv::Scalar(  0,   0,   0); break;
-    }
-
-    cv::line(canvas, cv::Point(pt0), cv::Point(pt1), color, 2, cv::LINE_AA);
-  }
+  projectLineModelImage(canvas, model, model2camera, camera_matrix);
 
   return canvas;
 }
@@ -73,6 +46,8 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
                            0., 0., 1.;
   
   uint assumed_line_width = 10;
+
+  // Line pixel extraction
   
   uint brightness_threshold = BrightPixelFilter::calculateBrightnessThreshold(0.05, 10, 220, image);
   uint darkness_threshold = brightness_threshold - 3;
@@ -91,6 +66,8 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
                                                      block_size,
                                                      aperture_size))
       .extract(image);
+
+  // Line detection
 
   Scalar rho_resolution = 3;
   Scalar theta_resolution = deg2rad(0.5);
@@ -126,9 +103,30 @@ std::map<std::string, cv::Mat> LineModelDetector::detect(const cv::Mat& image) {
       .addStep(std::make_unique<IdealPointClassifier>(ideal_point_dist))
       .detect(lpe_result);
 
+  // Homography estimation
+
+  Scalar min_beta = 0.4;
+  Scalar max_beta = 2.5;
+  Scalar hit_award = 1.0;
+  Scalar miss_penalty = 0.75;
+  
+  std::optional<Mat3> he_result = HomographyEstimator(assumed_camera_matrix, line_model_)
+      .addTest(std::make_unique<IsotropicScalingTest>(min_beta, max_beta))
+      .setScoring(std::make_unique<ModelAlignmentScoring>(hit_award, miss_penalty))
+      .estimate(lpe_result, ld_result);
+
+  if (!he_result) {
+    LOG(ERROR) << "Model could not be detected!";
+      return {
+        // { "Line pixel image", lpe_result.line_pixel_image },
+        { "Detected lines", visualizeDetectedLines(image, ld_result, assumed_camera_matrix) }
+      };
+  }
+  
   return {
-    { "Line pixel image", lpe_result.line_pixel_image },
-    { "Detected lines", visualizeDetectedLines(image, ld_result, assumed_camera_matrix) }
+    // { "Line pixel image", lpe_result.line_pixel_image },
+    { "Detected lines", visualizeDetectedLines(image, ld_result, assumed_camera_matrix) },
+    { "Detected model", visualizeDetectedModel(image, line_model_, he_result.value(), assumed_camera_matrix) }
   };
 }
 
