@@ -16,7 +16,6 @@ namespace po = boost::program_options;
 
 int runApp(const std::string& imgpath, const std::string& outpath, uint width, uint height, bool visualize, bool debug) {
   if (debug) visualize = true;
-  (void)outpath;
   
   // READING IMAGE ///////////////////////////////////////////////////////////////
 
@@ -39,6 +38,13 @@ int runApp(const std::string& imgpath, const std::string& outpath, uint width, u
   auto result = detector.detect(input_image, camera_matrix, debug);
 
   // PRESENTING RESULTS //////////////////////////////////////////////////////////
+
+  if (!outpath.empty() && result.model2camera_image_homography) {
+    generateOutputCsvFile(outpath,
+                          result.model2camera_image_homography.value(),
+                          input_image.size(),
+                          tennis_court_model);
+  }
 
   if (visualize) {
     if (result.model2camera_image_homography) {
