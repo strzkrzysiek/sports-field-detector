@@ -57,8 +57,8 @@ std::optional<Mat3> HomographyEstimator::estimate(const LinePixelExtractor::Resu
     return {};
   }
 
-  CHECK_GT(x_ids.size(), 2) << "Check model definition! Insufficient number of lines in group X.";
-  CHECK_GT(y_ids.size(), 2) << "Check model definition! Insufficient number of lines in group Y.";
+  CHECK_GE(x_ids.size(), 2) << "Check model definition! Insufficient number of lines in group X.";
+  CHECK_GE(y_ids.size(), 2) << "Check model definition! Insufficient number of lines in group Y.";
 
   LOG(INFO) << "Estimating homography with " << tests_.size() << " tests.";
 

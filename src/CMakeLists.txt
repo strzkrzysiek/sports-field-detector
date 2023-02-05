@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-project(court-lines)
+project(sports-field-detector)
 
 if(MSVC)
   message(FATAL_ERROR "MSVC is not supported")

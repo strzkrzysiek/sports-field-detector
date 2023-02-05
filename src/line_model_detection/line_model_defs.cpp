@@ -52,4 +52,44 @@ LineModel defineTennisCourtModel() {
   return model; 
 }
 
+LineModel defineVolleyballPitchModel() {
+  // One pixel is 2.5 cm
+  // A line is 5cm wide
+  // Add one meter margin from each side
+
+  LineModel model(40 * (9 + 2), 40 * (18 + 2), 2);
+
+  model.addLine("End Line",
+                 ImagePoint(   1*40 + 0.5,  1*40 + 0.5),
+                 ImagePoint(  10*40 - 1.5,  1*40 + 0.5));
+
+  model.addLine("End line",
+                 ImagePoint(   1*40 + 0.5, 19*40 - 1.5),
+                 ImagePoint(  10*40 - 1.5, 19*40 - 1.5));
+                 
+  model.addLine("Service line",
+                 ImagePoint(   1*40 + 0.5,  7*40 - 0.5),
+                 ImagePoint(  10*40 - 1.5,  7*40 - 0.5));
+
+  model.addLine("Service line",
+                 ImagePoint(   1*40 + 0.5, 13*40 - 0.5),
+                 ImagePoint(  10*40 - 1.5, 13*40 - 0.5));
+
+  model.addLine("Net",
+                 ImagePoint(   1*40 + 0.5, 10*40 - 0.5),
+                 ImagePoint(  10*40 - 1.5, 10*40 - 0.5));
+
+  model.addLine("Side line",
+                 ImagePoint(   1*40 + 0.5,  1*40 + 0.5),
+                 ImagePoint(   1*40 + 0.5, 19*40 - 1.5));
+
+  model.addLine("Side line",
+                 ImagePoint(  10*40 - 1.5,  1*40 + 0.5),
+                 ImagePoint(  10*40 - 1.5, 19*40 - 1.5));
+
+  model.commit();
+
+  return model; 
+}
+
 } // namespace hawkeye

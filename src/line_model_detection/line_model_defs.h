@@ -7,5 +7,6 @@
 namespace hawkeye {
 
 LineModel defineTennisCourtModel();
+LineModel defineVolleyballPitchModel();
 
 } // namespace hawkeye

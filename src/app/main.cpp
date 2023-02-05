@@ -1,6 +1,7 @@
 // Copyright 2023 Krzysztof Wrobel
 
 #include <exception>
+#include <optional>
 #include <string>
 
 #include <boost/program_options.hpp>
@@ -15,7 +16,7 @@
 namespace he = hawkeye;
 namespace po = boost::program_options;
 
-int runApp(const std::string& imgpath, const std::string& outpath, uint width, uint height, bool visualize, bool debug) {
+int runApp(const std::string& sport, const std::string& imgpath, const std::string& outpath, uint width, uint height, bool visualize, bool debug) {
   if (debug) visualize = true;
   
   // READING IMAGE ///////////////////////////////////////////////////////////////
@@ -32,10 +33,20 @@ int runApp(const std::string& imgpath, const std::string& outpath, uint width, u
 
   // PROCESSING IMAGE ////////////////////////////////////////////////////////////
 
-  he::LineModel tennis_court_model = he::defineTennisCourtModel();
+  std::optional<he::LineModel> line_model;
+
+  if (sport == "tennis") {
+    line_model = he::defineTennisCourtModel();
+  } else if (sport == "volleyball") {
+    line_model = he::defineVolleyballPitchModel();
+  } else {
+    LOG(ERROR) << "Unsupported sport!";
+    return -1;
+  }
+
   he::Mat3 camera_matrix = he::fakeCameraMatrix(input_image.size());
 
-  he::LineModelDetector detector(tennis_court_model);
+  he::LineModelDetector detector(line_model.value());
   auto result = detector.detect(input_image, camera_matrix, debug);
 
   // PRESENTING RESULTS //////////////////////////////////////////////////////////
@@ -44,7 +55,7 @@ int runApp(const std::string& imgpath, const std::string& outpath, uint width, u
     generateOutputCsvFile(outpath,
                           result.model2camera_image_homography.value(),
                           input_image.size(),
-                          tennis_court_model);
+                          line_model.value());
   }
 
   if (visualize) {
@@ -73,11 +84,13 @@ int main(int argc, char* argv[]) {
     
     std::string imgpath;
     std::string outpath;
+    std::string sport;
     uint width, height;
 
-    po::options_description po_desc("Usage");
+    po::options_description po_desc("Sports Field Detector - usage");
     po_desc.add_options()
       ("help", "Produce help message")
+      ("sport,s", po::value<std::string>(&sport)->required(), "Choose sport from predefined ones [tennis|volleyball]")
       ("imgpath,p", po::value<std::string>(&imgpath)->required(), "Path to the raw image file")
       ("outpath,o", po::value<std::string>(&outpath), "Path to the output CSV file (optional)")
       ("width,w", po::value<uint>(&width)->required(), "Image width")
@@ -100,7 +113,7 @@ int main(int argc, char* argv[]) {
       return -1;
     }
 
-    return runApp(imgpath, outpath, width, height, vm.count("visualize"), vm.count("debug"));
+    return runApp(sport, imgpath, outpath, width, height, vm.count("visualize"), vm.count("debug"));
 
   } catch(const std::exception& e) {
     LOG(ERROR) << "Error: " << e.what();
