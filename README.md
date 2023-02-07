@@ -50,9 +50,11 @@ The algorithm has three main steps:
 * Line detection [src/line_model_detection/line_detector.h](src/line_model_detection/line_detector.h)
   - detecting lines having extracted pixels as an input.
   - composed of several `Step`s.
-* Homography estimation [src/line_model_detection/homography_estimator.h](src/line_model_detection/homography_estimator.h)
+* Coarse homography estimation [src/line_model_detection/homography_estimator.h](src/line_model_detection/homography_estimator.h)
   - brute-force matching of the detected and model lines.
   - `Test`ing and `Scoring` the results to find the best estimation.
+* Homography refinement [src/line_model_detection/direct_model_alignment.h](src/line_model_detection/direct_model_alignment.h)
+  - Direct model image alignment using photometric error.
 
 See the `LineModelDetector::detect()` method in [src/line_model_detection/line_model_detector.cpp](src/line_model_detection/line_model_detector.cpp) to have a quick view on all the parts of the algorithm.
 

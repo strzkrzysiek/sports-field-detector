@@ -8,6 +8,7 @@
 #include <glog/logging.h>
 #include <opencv2/imgproc.hpp>
 
+#include "line_model_detection/direct_model_alignment.h"
 #include "line_model_detection/drawing_routines.h"
 #include "line_model_detection/homography_estimator.h"
 #include "line_model_detection/line_pixel_extractor.h"
@@ -41,6 +42,11 @@ cv::Mat visualizeDetectedModel(const cv::Mat& image,
 LineModelDetector::Result LineModelDetector::detect(const cv::Mat& image,
                                                     const Mat3& camera_matrix,
                                                     bool generate_debug_images) {  
+  Result result;
+  if (generate_debug_images) {
+     result.debug_images["Model image"] = line_model_.getImage();
+  }
+  
   const uint assumed_line_width = 10;
 
   // Line pixel extraction ////////////////////////////////////////////////////
@@ -62,6 +68,10 @@ LineModelDetector::Result LineModelDetector::detect(const cv::Mat& image,
                                                      block_size,
                                                      aperture_size))
       .extract(image);
+
+  if (generate_debug_images) {
+    result.debug_images["Line pixel image"] = lpe_result.line_pixel_image;
+  }
 
   // Line detection ///////////////////////////////////////////////////////////
 
@@ -93,6 +103,10 @@ LineModelDetector::Result LineModelDetector::detect(const cv::Mat& image,
       .addStep(std::make_unique<IdealPointClassifier>(ideal_point_dist))
       .detect(lpe_result);
 
+  if (generate_debug_images) {
+    result.debug_images["Detected lines"] = visualizeDetectedLines(image, ld_result, camera_matrix);
+  }
+
   // Homography estimation ////////////////////////////////////////////////////
 
   const Scalar min_beta = 0.4;
@@ -105,23 +119,27 @@ LineModelDetector::Result LineModelDetector::detect(const cv::Mat& image,
       .setScoring(std::make_unique<ModelAlignmentScoring>(hit_award, miss_penalty))
       .estimate(lpe_result, ld_result);
 
-  Result result;
-
-  if (he_result) {
-    LOG(INFO) << "Model successfully detected!";
-    result.model2camera_image_homography = camera_matrix * he_result.value();
-    result.visualization = visualizeDetectedModel(image, line_model_, he_result.value(), camera_matrix);
-  } else {
+  if (!he_result) {
     LOG(ERROR) << "Model could not be detected!";
+
+    return result;
   }
 
   if (generate_debug_images) {
-    result.debug_images = {
-      { "Line pixel image", lpe_result.line_pixel_image },
-      { "Detected lines", visualizeDetectedLines(image, ld_result, camera_matrix) },
-      { "Model image", line_model_.getImage() }
-    };
+    result.debug_images["Coarse homography estimation"] = visualizeDetectedModel(image, line_model_, he_result.value(), camera_matrix);
   }
+
+  // Direct model alignment ///////////////////////////////////////////////////
+
+  Scalar blur_size = assumed_line_width;
+  Mat3 model2camera = DirectModelAlignment(line_model_, image.size(), camera_matrix, blur_size)
+      .align(he_result.value(), lpe_result.line_pixel_image);
+
+  result.model2camera_image_homography = 
+  result.model2camera_image_homography = camera_matrix * model2camera;
+  result.visualization = visualizeDetectedModel(image, line_model_, model2camera, camera_matrix);
+  
+  LOG(INFO) << "Model successfully detected!";
 
   return result;
 }

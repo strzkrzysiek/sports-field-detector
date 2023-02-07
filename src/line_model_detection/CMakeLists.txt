@@ -6,6 +6,7 @@ find_package(OpenCV 4 REQUIRED)
 find_package(Ceres REQUIRED)
 
 add_library(line_model_detection
+  direct_model_alignment.cpp
   drawing_routines.cpp
   homography_estimator.cpp
   line_detector.cpp
